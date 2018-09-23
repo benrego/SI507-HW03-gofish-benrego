@@ -127,8 +127,149 @@ class Hand(object):
 
 ### Go Fish ###
 
+#game initialize function
+
+
+    # print(player)
+    # print(player_hand)
+
+
+#select start
+def select_start(player_list):
+    starting_position = random.randint(0,len(player_list)-1)
+    print(player_list[starting_position],"will start.")
+    return starting_position
+
+def whose_turn(player):
+    command_player = player_list[player]
+    print(player_list[player],"'S TURN")
+    print("Your Hand:")
+    print(hand_dictionary[player_list[player]])
+    card_rank = 0
+    while card_rank not in range(1,14):
+        card_rank = input('Please choose a card rank you would like to ask the other player if they have (between 1-13):')
+        try:
+            card_rank = int(card_rank)
+        except:
+            card_rank = input('Please choose a card rank you would like to ask the other player if they have (between 1-13):')
+    player_asked = ''
+    while player_asked not in player_list:
+        player_asked = input('Please name the player you are asking:').upper()
+    return (command_player,player_asked,card_rank)
+
+def hand_check(inquiry):
+    hand = []
+    hand_types = []
+    player_asking = inquiry[0]
+    player_asked = inquiry[1]
+    for card in hand_dictionary[player_asked].cards:
+        hand.append(card.__str__())
+    #print(player_asked)
+    #print(hand)
+    for indv_card in hand:
+        card_type = indv_card.split()[0]
+        if card_type == "Ace":
+            card_type = 1
+        elif card_type == "King":
+            card_type = 13
+        elif card_type == "Queen":
+            card_type = 12
+        elif card_type == "Jack":
+            card_type = 11
+        card_type = int(card_type)
+        hand_types.append(card_type)
+    #print(hand_types)
+    #print(inquiry[0])
+    #print(inquiry[1])
+    if inquiry[2] in hand_types:
+
+
+        #card swap between players
+        for cards in hand_dictionary[player_asked].cards:
+            if inquiry[2] == 1 and cards.__str__().split()[0] == "Ace":
+                hand_dictionary[player_asking].add_card(cards)
+                hand_dictionary[player_asked].remove_card(cards)
+                print(player_asked,"handed an Ace to", player_asking)
+                #print(hand_dictionary[player_asked])
+                #print(hand_dictionary[player_asking])
+            elif inquiry[2] == 11 and cards.__str__().split()[0] == "Jack":
+                hand_dictionary[player_asking].add_card(cards)
+                hand_dictionary[player_asked].remove_card(cards)
+                print(player_asked,"handed a Jack to", player_asking)
+                #print(hand_dictionary[player_asked])
+                #print(hand_dictionary[player_asking])
+            elif inquiry[2] == 12 and cards.__str__().split()[0] == "Queen":
+                hand_dictionary[player_asking].add_card(cards)
+                hand_dictionary[player_asked].remove_card(cards)
+                print(player_asked,"handed a Queen to", player_asking)
+                #print(hand_dictionary[player_asked])
+                #print(hand_dictionary[player_asking])
+            elif inquiry[2] == 13 and cards.__str__().split()[0] == "King":
+                hand_dictionary[player_asking].add_card(cards)
+                hand_dictionary[player_asked].remove_card(cards)
+                print(player_asked,"handed an King to", player_asking)
+                #print(hand_dictionary[player_asked])
+                #print(hand_dictionary[player_asking])
+            elif str(inquiry[2]) in cards.__str__():
+                hand_dictionary[player_asking].add_card(cards)
+                hand_dictionary[player_asked].remove_card(cards)
+                print(player_asked,"handed a", str(inquiry[2]),"to", player_asking)
+                #print(hand_dictionary[player_asked])
+                #print(hand_dictionary[player_asking])
+    else:
+        print(player_asked,"doesn't have a", str(inquiry[2]),"- Go fish", player_asking)
+        print(player_asking,'draws a card...')
+        pop_a_card = shuffled_deck.pop_card()
+        hand_dictionary[player_asking].add_card(pop_a_card)
+        if pop_a_card.__str__().split()[0] == str(inquiry[2]):
+            print(player_asking,"drew the card he/she asked for, they get to go again!")
+
+
+
+def book_add(book):
+    for player in hand_dictionary.keys():
+        player_hand_quantity = {}
+        for cards in hand_dictionary[player].cards:
+            if cards.__str__().split()[0] not in player_hand_quantity:
+                player_hand_quantity[cards.__str__().split()[0]] = 1
+            else:
+                player_hand_quantity[cards.__str__().split()[0]] += 1
+        # print(player)
+        # print(player_hand_quantity)
+
+
+        # check to see if a player has a set of 4
+        for types in player_hand_quantity.keys():
+            if player_hand_quantity[types] >=4:
+                # print("Before")
+                # print(hand_dictionary[player])
+                if player in book.keys():
+                    book[player].append(types)
+                else:
+                    book[player] = [types]
+                print(player,"has completed the set for",types)
+
+
+                #now, remove the 4 cards from their hand
+                for set_card in hand_dictionary[player].cards:
+                    if set_card.__str__().split()[0] == types:
+                        hand_dictionary[player].remove_card(set_card)
+                    else:
+                        continue
+                # print("after")
+                # print(hand_dictionary[player])
+                print(book)
+                return True
+
+
+        #this should cause the person inquiring to draw a card and if it is the card they needed, they go again
+
+#this can be activated after any hand check to drop the quad pairs
+
+
+
 players = input("Please list the names of the players separated by commas: ")
-player_list = players.replace(' ', '').split(',')
+player_list = players.replace(' ', '').upper().split(',')
 
 hand_dictionary = {}
 shuffled_deck = Deck()
@@ -140,8 +281,33 @@ for player in player_list:
     for i in range(7):
         player_hand.draw(shuffled_deck)
     hand_dictionary[player] = player_hand
-    print(player)
-    print(player_hand)
+
+book = {}
+# startgame = select_start(player_list)
+# first_turn_result = whose_turn(startgame)
+# first_inquiry = hand_check(first_turn_result,book)
+while len(book.keys())<1:
+    for player in range(len(player_list)):
+        print('\n')
+        players_turn = whose_turn(player)
+        inquiry = hand_check(players_turn)
+        add_to_book = book_add(book)
+
+leader = ''
+leader_score = 0
+for person in book.keys():
+    if len(book[person])>leader_score:
+        leader_score = len(book[person])
+        leader = person
+
+print('*' *25)
+print('*' *25)
+print("The winner is", leader, "with", leader_score, 'points')
+print('*' *25)
+print('*' *25)
+
+    #break
+
 
 
 
